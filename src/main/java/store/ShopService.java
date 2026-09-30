@@ -1,8 +1,6 @@
 package store;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class ShopService {
     private final ProductRepo productRepo;
@@ -21,22 +19,45 @@ public class ShopService {
                 '}';
     }
 
-    public Order placeOrder(List<String> productIds) {
-        if(productIds == null || productIds.isEmpty()) {
+    public Order placeOrder(Map<String, Integer> idsWithQuantity) {
+        if(idsWithQuantity == null || idsWithQuantity.isEmpty()) {
             return null;
         }
-        List<Product> orderedProducts = new ArrayList<>();
-        for(String productId : productIds) {
-            Product product = productRepo.getById(productId);
+
+        Map<Product, Integer> items = new HashMap<>();
+
+        for(Map.Entry<String, Integer> item: idsWithQuantity.entrySet()) {
+            Product product = productRepo.getById(item.getKey());
             if(product == null) {
-                System.out.println("this product with ID " + productId + " is not found");
+                System.out.println("this product with ID " + item.getKey() + " is not found");
                 return null;
             }
-            orderedProducts.add(product);
+            items.put(product, item.getValue());
+
+
         }
-        Order order = new Order(UUID.randomUUID().toString(), orderedProducts);
+        Order order = new Order(UUID.randomUUID().toString(), items);
         orderRepo.add(order);
         return order;
+    }
+
+    public Order changeQuantity(String orderId, String productId, int newQuantity) {
+
+        Order targetOrder = orderRepo.getById(orderId);
+        Product targetProduct = productRepo.getById(productId);
+        if(targetOrder == null || targetProduct ==null || !targetOrder.products().containsKey(targetProduct)) {
+            System.out.println("Product or order not found");
+            return null;
+        }
+        Map<Product, Integer> items = new HashMap<>(targetOrder.products());
+        items.put(targetProduct, newQuantity);
+
+        Order newOrder = new Order(orderId, items);
+        orderRepo.remove(orderId);
+        orderRepo.add(newOrder);
+        return newOrder;
+
+
 
     }
 }
