@@ -5,10 +5,12 @@ import java.util.*;
 public class ShopService {
     private final ProductRepo productRepo;
     private final OrderRepo orderRepo;
+    private final Inventory inventory;
 
-    public ShopService(ProductRepo productRepo, OrderRepo orderRepo) {
+    public ShopService(ProductRepo productRepo, OrderRepo orderRepo, Inventory inventory) {
         this.productRepo = productRepo;
         this.orderRepo = orderRepo;
+        this.inventory = inventory;
     }
 
     @Override
@@ -36,6 +38,11 @@ public class ShopService {
 
 
         }
+
+        for(Map.Entry<Product, Integer> item: items.entrySet()) {
+            inventory.reduce(item.getKey().id(), item.getValue());
+
+        }
         Order order = new Order(UUID.randomUUID().toString(), items);
         orderRepo.add(order);
         return order;
@@ -50,14 +57,27 @@ public class ShopService {
             return null;
         }
         Map<Product, Integer> items = new HashMap<>(targetOrder.products());
-        items.put(targetProduct, newQuantity);
 
+
+        int oldQuantity = targetOrder.products().get(targetProduct);
+        int diff = newQuantity - oldQuantity;
+
+        if(diff> 0) {
+            if(!inventory.isAvailable(targetProduct.id(), newQuantity)) {
+                System.out.println("No enough stock for product " + productId);
+                return null;
+            }
+            else {
+                inventory.reduce(targetProduct.id(), newQuantity);
+            }
+        } else if(diff < 0) {
+            inventory.add(targetProduct.id(), newQuantity);
+        }
+        items.put(targetProduct, newQuantity);
         Order newOrder = new Order(orderId, items);
         orderRepo.remove(orderId);
         orderRepo.add(newOrder);
         return newOrder;
-
-
 
     }
 }

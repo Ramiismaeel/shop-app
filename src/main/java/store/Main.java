@@ -16,8 +16,9 @@ public class Main {
         productRepo.add(p2);
 
         OrderRepo orderRepo = new OrderMapRepo();
+        Inventory inventory = new Inventory();
 
-        ShopService shop = new ShopService(productRepo, orderRepo);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
 
         Order order = shop.placeOrder(Map.of("1", 2, "2", 1));
         System.out.println(shop);

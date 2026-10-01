@@ -16,13 +16,16 @@ class ShopServiceTest {
     private Order order1;
     private Product product1;
     private ShopService shop;
+    private Inventory inventory;
 
     @BeforeEach
     void setUp() {
         orderRepo = new OrderMapRepo();
         productRepo = new ProductListRepo();
+        inventory = new Inventory();
         product1 = new Product("1" , "Laptop", new BigDecimal("600"));
-        shop = new ShopService(productRepo, orderRepo);
+        inventory.add(product1.id(), 7);
+        shop = new ShopService(productRepo, orderRepo, inventory);
 
     }
 
@@ -30,8 +33,9 @@ class ShopServiceTest {
     void placeOrderShouldPlaceOrderInShopAndReturnOrder_byGivenProductAndOrderAndQuantity() {
 
         productRepo.add(product1);
-
-        ShopService shop = new ShopService(productRepo, orderRepo);
+        inventory = new Inventory();
+        inventory.add(product1.id(), 4);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
         order1 =  shop.placeOrder(Map.of(product1.id(), 2));
         assertEquals(order1.products(), Map.of(product1, 2));
 
@@ -40,7 +44,9 @@ class ShopServiceTest {
     @Test
     void placeOrderShouldReturnNull_byGivenNoneExistProductId() {
         productRepo.add(product1);
-        shop = new ShopService(productRepo, orderRepo);
+        inventory = new Inventory();
+        inventory.add(product1.id(), 3);
+        shop = new ShopService(productRepo, orderRepo, inventory);
         order1 =  shop.placeOrder(Map.of("3", 2));
 
         assertNull(order1);
@@ -49,10 +55,25 @@ class ShopServiceTest {
     }
 
     @Test
-    void changeQuantity() {
+    void changeQuantity_shouldReturnNull_byEmptyInventory() {
         productRepo.add(product1);
+        inventory = new Inventory();
+        inventory.add(product1.id(), 3);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
+        Order order =  shop.placeOrder(Map.of(product1.id(), 2));
+        assertEquals(order.products(), Map.of(product1, 2));
 
-        ShopService shop = new ShopService(productRepo, orderRepo);
+        order = shop.changeQuantity(order.id(), product1.id(), 5);
+        assertNull( order);
+
+    }
+
+    @Test
+    void changeQuantity_shouldReturnOrder_byFullInventory() {
+        productRepo.add(product1);
+        inventory = new Inventory();
+        inventory.add(product1.id(), 9);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
         Order order =  shop.placeOrder(Map.of(product1.id(), 2));
         assertEquals(order.products(), Map.of(product1, 2));
 
