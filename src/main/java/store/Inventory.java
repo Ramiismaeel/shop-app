@@ -12,7 +12,7 @@ public class Inventory {
         products.put(productId,  current +quantity);
     }
     public void reduce(String productId, int quantity) {
-        int current = products.getOrDefault(productId, 0);
+        int current = getQuantity(productId);
         if(quantity> current) {
             throw new IllegalArgumentException("there are only" + current + " items in stock" );
         } else {
@@ -20,7 +20,7 @@ public class Inventory {
         }
     }
     public boolean isAvailable(String productId, int quantity) {
-        int current = products.getOrDefault(productId, 0);
+        int current = getQuantity(productId);
         return current>= quantity;
     }
     public int getQuantity(String productId) {
