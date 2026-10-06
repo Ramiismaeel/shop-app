@@ -74,10 +74,18 @@ public class ShopService {
             inventory.add(targetProduct.id(), newQuantity);
         }
         items.put(targetProduct, newQuantity);
-        Order newOrder = new Order(orderId, items);
+        Order newOrder = new Order(orderId, items, targetOrder.status());
         orderRepo.remove(orderId);
         orderRepo.add(newOrder);
         return newOrder;
 
+    }
+
+    public List<Order> findOrderByStatus(OrderStatus status) {
+        return orderRepo.getAll().stream()
+                .filter(o-> o.status().equals(status)).toList();
+    }
+    public List<Order> getAll() {
+        return orderRepo.getAll();
     }
 }

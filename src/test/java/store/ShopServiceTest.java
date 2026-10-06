@@ -81,4 +81,18 @@ class ShopServiceTest {
         assertEquals(order.products(), Map.of(product1, 5));
 
     }
+
+    @Test
+    void findOrderByStatus_shouldReturn2Orders_byGivenPROCESSING() {
+        productRepo.add(product1);
+        inventory = new Inventory();
+        inventory.add(product1.id(), 6);
+        shop = new ShopService(productRepo, orderRepo, inventory);
+        shop.placeOrder(Map.of("1", 2));
+        shop.placeOrder(Map.of("1", 1));
+        shop.placeOrder(Map.of("1", 2));
+
+        assertEquals(3,shop.findOrderByStatus(OrderStatus.PROCESSING).size());
+
+    }
 }
