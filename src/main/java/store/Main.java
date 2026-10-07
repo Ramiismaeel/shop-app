@@ -2,6 +2,7 @@ package store;
 
 import java.math.BigDecimal;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Main {
@@ -17,6 +18,7 @@ public class Main {
 
         OrderRepo orderRepo = new OrderMapRepo();
         Inventory inventory = new Inventory();
+        List.of(p1, p2, p3 , p4).forEach(p-> inventory.add(p.id(), 10));
 
         ShopService shop = new ShopService(productRepo, orderRepo, inventory);
 

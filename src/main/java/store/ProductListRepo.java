@@ -2,6 +2,7 @@ package store;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ProductListRepo implements ProductRepo{
     private final List<Product> products = new ArrayList<>();
@@ -13,13 +14,13 @@ public class ProductListRepo implements ProductRepo{
     }
 
     @Override
-    public Product getById(String id) {
+    public Optional<Product> getById(String id) {
         for(Product product: products) {
             if (product.id().equals(id)) {
-                return product;
+                return Optional.of(product);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     @Override
