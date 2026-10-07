@@ -1,5 +1,6 @@
 package store;
 
+import java.time.Instant;
 import java.util.*;
 
 public class ShopService {
@@ -21,7 +22,7 @@ public class ShopService {
                 '}';
     }
 
-    public Order placeOrder(Map<String, Integer> idsWithQuantity) {
+    public Order placeOrder(Map<String, Integer> idsWithQuantity) throws ProductNotFoundException {
         if(idsWithQuantity == null || idsWithQuantity.isEmpty()) {
             return null;
         }
@@ -29,13 +30,11 @@ public class ShopService {
         Map<Product, Integer> items = new HashMap<>();
 
         for(Map.Entry<String, Integer> item: idsWithQuantity.entrySet()) {
-            Product product = productRepo.getById(item.getKey());
-            if(product == null) {
-                System.out.println("this product with ID " + item.getKey() + " is not found");
-                return null;
+            Optional<Product> product = productRepo.getById(item.getKey());
+            if(product.isEmpty()) {
+                throw new ProductNotFoundException("Product with ID: " + item.getKey() + " is not found.");
             }
-            items.put(product, item.getValue());
-
+            items.put(product.get(), item.getValue());
 
         }
 
@@ -43,7 +42,7 @@ public class ShopService {
             inventory.reduce(item.getKey().id(), item.getValue());
 
         }
-        Order order = new Order(UUID.randomUUID().toString(), items);
+        Order order = new Order(UUID.randomUUID().toString(), items, OrderStatus.PROCESSING, Instant.now());
         orderRepo.add(order);
         return order;
     }
@@ -51,11 +50,12 @@ public class ShopService {
     public Order changeQuantity(String orderId, String productId, int newQuantity) {
 
         Order targetOrder = orderRepo.getById(orderId);
-        Product targetProduct = productRepo.getById(productId);
-        if(targetOrder == null || targetProduct ==null || !targetOrder.products().containsKey(targetProduct)) {
+        Optional<Product> targetOpt = productRepo.getById(productId);
+        if(targetOrder == null  || targetOpt.isEmpty() || !targetOrder.products().containsKey(targetOpt.get())) {
             System.out.println("Product or order not found");
             return null;
         }
+        Product targetProduct = targetOpt.get();
         Map<Product, Integer> items = new HashMap<>(targetOrder.products());
 
 
@@ -63,21 +63,41 @@ public class ShopService {
         int diff = newQuantity - oldQuantity;
 
         if(diff> 0) {
-            if(!inventory.isAvailable(targetProduct.id(), newQuantity)) {
+            if(!inventory.isAvailable(targetProduct.id(), diff)) {
                 System.out.println("No enough stock for product " + productId);
                 return null;
             }
             else {
-                inventory.reduce(targetProduct.id(), newQuantity);
+                inventory.reduce(targetProduct.id(), diff);
             }
         } else if(diff < 0) {
-            inventory.add(targetProduct.id(), newQuantity);
+            inventory.add(targetProduct.id(), -diff);
         }
         items.put(targetProduct, newQuantity);
-        Order newOrder = new Order(orderId, items);
+        Order newOrder = new Order(orderId, items, targetOrder.status(), targetOrder.createdAt());
         orderRepo.remove(orderId);
         orderRepo.add(newOrder);
         return newOrder;
 
+    }
+
+    public List<Order> findOrderByStatus(OrderStatus status) {
+        return orderRepo.getAll().stream()
+                .filter(o-> o.status().equals(status)).toList();
+    }
+    public List<Order> getAll() {
+        return orderRepo.getAll();
+    }
+
+    public Order changeStatus(String orderId, OrderStatus newStatus) {
+        Order targetOrder = orderRepo.getById(orderId);
+        if(targetOrder == null) {
+            System.out.println("There is no order with id: " + orderId);
+            return null;
+        }
+        Order updatedOrder = targetOrder.withStatus(newStatus);
+        orderRepo.remove(orderId);
+        orderRepo.add(updatedOrder);
+        return updatedOrder;
     }
 }

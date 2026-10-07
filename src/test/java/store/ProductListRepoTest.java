@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -26,19 +27,20 @@ class ProductListRepoTest {
 
         productRepo.add(product1);
         assertEquals(1, productRepo.getAll().size());
-        assertEquals(product1, productRepo.getById(product1.id()));
+        assertEquals(Optional.of(product1), productRepo.getById(product1.id()));
     }
 
     @Test
     void getById_shouldReturn_theTargetProduct() {
         productRepo.add(product2);
-        assertEquals(product2, productRepo.getById(product2.id()));
+        assertEquals(Optional.of(product2), productRepo.getById(product2.id()));
     }
 
     @Test
     void remove_shouldRemoveTheProductFromTheList_byGivenId() {
+        productRepo.add(product2);
         productRepo.remove(product2.id());
-        assertNull( productRepo.getById(product2.id()));
+        assertTrue(productRepo.getById(product2.id()).isEmpty());
     }
 
     @Test

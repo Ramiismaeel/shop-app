@@ -1,9 +1,6 @@
 package store;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ProductMapRepo implements ProductRepo{
 
@@ -15,8 +12,8 @@ public class ProductMapRepo implements ProductRepo{
     }
 
     @Override
-    public Product getById(String id) {
-      return this.products.get(id);
+    public Optional<Product> getById(String id) {
+      return Optional.ofNullable(this.products.get(id));
 
     }
 
