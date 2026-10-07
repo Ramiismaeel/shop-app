@@ -12,7 +12,6 @@ class ShopServiceTest {
 
     private ProductRepo productRepo;
     private OrderRepo orderRepo;
-    private Order order1;
     private Product product1;
     private ShopService shop;
     private Inventory inventory;
@@ -29,32 +28,30 @@ class ShopServiceTest {
     }
 
     @Test
-    void placeOrderShouldPlaceOrderInShopAndReturnOrder_byGivenProductAndOrderAndQuantity() {
+    void placeOrderShouldPlaceOrderInShopAndReturnOrder_byGivenProductAndOrderAndQuantity() throws ProductNotFoundException {
 
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 4);
         ShopService shop = new ShopService(productRepo, orderRepo, inventory);
-        order1 =  shop.placeOrder(Map.of(product1.id(), 2));
+        Order order1 =  shop.placeOrder(Map.of(product1.id(), 2));
         assertEquals(order1.products(), Map.of(product1, 2));
 
     }
 
     @Test
-    void placeOrderShouldReturnNull_byGivenNoneExistProductId() {
+    void placeOrderShouldThrowException_byGivenNoneExistProductId() {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 3);
         shop = new ShopService(productRepo, orderRepo, inventory);
-        order1 =  shop.placeOrder(Map.of("3", 2));
-
-        assertNull(order1);
+        assertThrows(ProductNotFoundException.class, ()-> shop.placeOrder(Map.of("3", 2)));
         assertTrue(orderRepo.getAll().isEmpty());
 
     }
 
     @Test
-    void changeQuantity_shouldReturnNull_byEmptyInventory() {
+    void changeQuantity_shouldReturnNull_byEmptyInventory() throws ProductNotFoundException {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 3);
@@ -68,7 +65,7 @@ class ShopServiceTest {
     }
 
     @Test
-    void changeQuantity_shouldReturnOrder_byFullInventory() {
+    void changeQuantity_shouldReturnOrder_byFullInventory() throws ProductNotFoundException {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 9);
@@ -82,7 +79,7 @@ class ShopServiceTest {
     }
 
     @Test
-    void findOrderByStatus_shouldReturn2Orders_byGivenPROCESSING() {
+    void findOrderByStatus_shouldReturn2Orders_byGivenPROCESSING() throws ProductNotFoundException {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 6);

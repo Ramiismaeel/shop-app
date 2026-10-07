@@ -21,7 +21,7 @@ public class ShopService {
                 '}';
     }
 
-    public Order placeOrder(Map<String, Integer> idsWithQuantity) {
+    public Order placeOrder(Map<String, Integer> idsWithQuantity) throws ProductNotFoundException {
         if(idsWithQuantity == null || idsWithQuantity.isEmpty()) {
             return null;
         }
@@ -31,8 +31,7 @@ public class ShopService {
         for(Map.Entry<String, Integer> item: idsWithQuantity.entrySet()) {
             Optional<Product> product = productRepo.getById(item.getKey());
             if(product.isEmpty()) {
-                System.out.println("this product with ID " + item.getKey() + " is not found");
-                return null;
+                throw new ProductNotFoundException("Product with ID: " + item.getKey() + " is not found.");
             }
             items.put(product.get(), item.getValue());
 
