@@ -91,4 +91,19 @@ class ShopServiceTest {
         assertEquals(3,shop.findOrderByStatus(OrderStatus.PROCESSING).size());
 
     }
+
+    @Test
+    void updateOrder_shouldReturnOrderWithStatusCOMPLETED_byGiven_OrderStatus_COMPLETED() {
+        productRepo.add(product1);
+        inventory = new Inventory();
+        inventory.add(product1.id(), 6);
+        shop = new ShopService(productRepo, orderRepo, inventory);
+        Order order = shop.placeOrder(Map.of(product1.id(), 2));
+        assertEquals(OrderStatus.PROCESSING, order.status());
+
+        Order updatedOrder = shop.changeStatus(order.id(), OrderStatus.COMPLETED);
+        assertEquals(OrderStatus.COMPLETED, updatedOrder.status());
+        assertEquals(orderRepo.getById(order.id()).id(), updatedOrder.id());
+
+    }
 }

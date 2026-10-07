@@ -87,4 +87,16 @@ public class ShopService {
     public List<Order> getAll() {
         return orderRepo.getAll();
     }
+
+    public Order changeStatus(String orderId, OrderStatus newStatus) {
+        Order targetOrder = orderRepo.getById(orderId);
+        if(targetOrder == null) {
+            System.out.println("There is no order with id: " + orderId);
+            return null;
+        }
+        Order updatedOrder = targetOrder.withStatus(newStatus);
+        orderRepo.remove(orderId);
+        orderRepo.add(updatedOrder);
+        return updatedOrder;
+    }
 }
