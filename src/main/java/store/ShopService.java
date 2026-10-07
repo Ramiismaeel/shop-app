@@ -1,5 +1,6 @@
 package store;
 
+import java.time.Instant;
 import java.util.*;
 
 public class ShopService {
@@ -41,7 +42,7 @@ public class ShopService {
             inventory.reduce(item.getKey().id(), item.getValue());
 
         }
-        Order order = new Order(UUID.randomUUID().toString(), items);
+        Order order = new Order(UUID.randomUUID().toString(), items, OrderStatus.PROCESSING, Instant.now());
         orderRepo.add(order);
         return order;
     }
@@ -73,7 +74,7 @@ public class ShopService {
             inventory.add(targetProduct.id(), -diff);
         }
         items.put(targetProduct, newQuantity);
-        Order newOrder = new Order(orderId, items, targetOrder.status());
+        Order newOrder = new Order(orderId, items, targetOrder.status(), targetOrder.createdAt());
         orderRepo.remove(orderId);
         orderRepo.add(newOrder);
         return newOrder;

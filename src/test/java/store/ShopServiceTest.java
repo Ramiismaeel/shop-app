@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,8 +35,15 @@ class ShopServiceTest {
         inventory = new Inventory();
         inventory.add(product1.id(), 4);
         ShopService shop = new ShopService(productRepo, orderRepo, inventory);
+
+        Instant before = Instant.now();
         Order order1 =  shop.placeOrder(Map.of(product1.id(), 2));
+        Instant after = Instant.now();
+
         assertEquals(order1.products(), Map.of(product1, 2));
+        assertEquals(Map.of(product1, 2), order1.products());
+        assertFalse(order1.createdAt().isBefore(before));
+        assertFalse(order1.createdAt().isAfter(after));
 
     }
 
