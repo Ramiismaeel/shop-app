@@ -16,6 +16,7 @@ class ShopServiceTest {
     private Product product1;
     private ShopService shop;
     private Inventory inventory;
+    private IdService idService;
 
     @BeforeEach
     void setUp() {
@@ -24,7 +25,8 @@ class ShopServiceTest {
         inventory = new Inventory();
         product1 = new Product("1" , "Laptop", new BigDecimal("600"));
         inventory.add(product1.id(), 7);
-        shop = new ShopService(productRepo, orderRepo, inventory);
+        idService = new IdService();
+        shop = new ShopService(productRepo, orderRepo, inventory, idService);
 
     }
 
@@ -34,7 +36,7 @@ class ShopServiceTest {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 4);
-        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory, idService);
 
         Instant before = Instant.now();
         Order order1 =  shop.placeOrder(Map.of(product1.id(), 2));
@@ -52,7 +54,7 @@ class ShopServiceTest {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 3);
-        shop = new ShopService(productRepo, orderRepo, inventory);
+        shop = new ShopService(productRepo, orderRepo, inventory, idService);
         assertThrows(ProductNotFoundException.class, ()-> shop.placeOrder(Map.of("3", 2)));
         assertTrue(orderRepo.getAll().isEmpty());
 
@@ -63,7 +65,7 @@ class ShopServiceTest {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 3);
-        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory, idService);
         Order order =  shop.placeOrder(Map.of(product1.id(), 2));
         assertEquals(order.products(), Map.of(product1, 2));
 
@@ -77,7 +79,7 @@ class ShopServiceTest {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 9);
-        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory, idService);
         Order order =  shop.placeOrder(Map.of(product1.id(), 2));
         assertEquals(order.products(), Map.of(product1, 2));
 
@@ -91,7 +93,7 @@ class ShopServiceTest {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 6);
-        shop = new ShopService(productRepo, orderRepo, inventory);
+        shop = new ShopService(productRepo, orderRepo, inventory, idService);
         shop.placeOrder(Map.of("1", 2));
         shop.placeOrder(Map.of("1", 1));
         shop.placeOrder(Map.of("1", 2));
@@ -105,7 +107,7 @@ class ShopServiceTest {
         productRepo.add(product1);
         inventory = new Inventory();
         inventory.add(product1.id(), 6);
-        shop = new ShopService(productRepo, orderRepo, inventory);
+        shop = new ShopService(productRepo, orderRepo, inventory, idService);
         Order order = shop.placeOrder(Map.of(product1.id(), 2));
         assertEquals(OrderStatus.PROCESSING, order.status());
 
@@ -113,5 +115,22 @@ class ShopServiceTest {
         assertEquals(OrderStatus.COMPLETED, updatedOrder.status());
         assertEquals(orderRepo.getById(order.id()).id(), updatedOrder.id());
 
+    }
+
+    @Test
+    void getOldestOrderPerStatus_shouldReturnOldestOrder_forEachStatus() {
+        Instant now = Instant.now();
+        Order oldProcessing = new Order("o1", Map.of(product1, 1), OrderStatus.PROCESSING, now.minusSeconds(60));
+        Order newProcessing = new Order("o2", Map.of(product1, 1), OrderStatus.PROCESSING, now);
+        Order completed = new Order("o3", Map.of(product1, 1), OrderStatus.COMPLETED, now.minusSeconds(30));
+        orderRepo.add(oldProcessing);
+        orderRepo.add(newProcessing);
+        orderRepo.add(completed);
+
+        Map<OrderStatus, Order> result = shop.getOldestOrderPerStatus();
+
+        assertEquals(2, result.size());
+        assertEquals(oldProcessing, result.get(OrderStatus.PROCESSING));
+        assertEquals(completed, result.get(OrderStatus.COMPLETED));
     }
 }
