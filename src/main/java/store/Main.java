@@ -1,7 +1,6 @@
 package store;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -13,23 +12,33 @@ public class Main {
         Product p4 = new Product("4" , "Keyboard", new BigDecimal("80"));
 
         ProductRepo productRepo = new ProductMapRepo();
-        productRepo.add(p1);
-        productRepo.add(p2);
-
         OrderRepo orderRepo = new OrderMapRepo();
         Inventory inventory = new Inventory();
-        List.of(p1, p2, p3 , p4).forEach(p-> inventory.add(p.id(), 10));
+        IdService idService = new IdService();
 
-        ShopService shop = new ShopService(productRepo, orderRepo, inventory);
 
-        Order order = shop.placeOrder(Map.of("1", 2, "2", 1));
+        List.of(p1, p2, p3 , p4).forEach(p-> {
+            inventory.add(p.id(), 10);
+            productRepo.add(p);
+        });
+
+        ShopService shop = new ShopService(productRepo, orderRepo, inventory, idService);
+
+        Order order1 = shop.placeOrder(Map.of("1", 2, "2", 1));
+        Order order2 = shop.placeOrder(Map.of("3", 2, "4", 1));
+        Order order3 = shop.placeOrder(Map.of("1", 1, "4", 1));
+        Order order4 = shop.placeOrder(Map.of("4", 1, "2", 1));
         System.out.println(shop);
 
         System.out.println(orderRepo.getAll());
-        System.out.println(order.totalSum());
+        System.out.println(order1.totalSum());
 
-        Order updatedOrder = shop.changeQuantity(order.id(), "1", 3);
+        Order updatedOrder = shop.changeQuantity(order1.id(), "1", 3);
         System.out.println(updatedOrder.totalSum());
+
+        for(Order order: shop.getAll()) {
+            System.out.println(order.id() + " | " + order.status()+ " | " + order.createdAt().toString() + " | " + order.totalSum());
+        }
 
 
     }

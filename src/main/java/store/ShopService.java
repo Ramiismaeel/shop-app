@@ -1,18 +1,16 @@
 package store;
 
+import lombok.RequiredArgsConstructor;
+
 import java.time.Instant;
 import java.util.*;
 
+@RequiredArgsConstructor
 public class ShopService {
     private final ProductRepo productRepo;
     private final OrderRepo orderRepo;
     private final Inventory inventory;
-
-    public ShopService(ProductRepo productRepo, OrderRepo orderRepo, Inventory inventory) {
-        this.productRepo = productRepo;
-        this.orderRepo = orderRepo;
-        this.inventory = inventory;
-    }
+    private final IdService idService;
 
     @Override
     public String toString() {
@@ -42,7 +40,7 @@ public class ShopService {
             inventory.reduce(item.getKey().id(), item.getValue());
 
         }
-        Order order = new Order(UUID.randomUUID().toString(), items, OrderStatus.PROCESSING, Instant.now());
+        Order order = new Order(idService.generateId().toString(), items, OrderStatus.PROCESSING, Instant.now());
         orderRepo.add(order);
         return order;
     }
@@ -99,5 +97,15 @@ public class ShopService {
         orderRepo.remove(orderId);
         orderRepo.add(updatedOrder);
         return updatedOrder;
+    }
+
+    public Map<OrderStatus, Order> getOldestOrderPerStatus() {
+        Map<OrderStatus, Order> oldestOrdersPerStatus = new HashMap<>();
+               for(OrderStatus s: OrderStatus.values()){
+                   findOrderByStatus(s).stream()
+                           .min(Comparator.comparing(Order::createdAt))
+                           .ifPresent(o -> oldestOrdersPerStatus.put(s, o));
+               }
+        return oldestOrdersPerStatus;
     }
 }
